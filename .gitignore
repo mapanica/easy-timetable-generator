@@ -99,3 +99,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# data
+data/
+data/example/timetable.json
+!data/example/*
