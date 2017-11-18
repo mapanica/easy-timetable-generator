@@ -1,32 +1,52 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-import os, sys, csv, json, re
+import os, sys, csv, json, re, datetime, getopt
 
 DATA_FOLDER         = 'data/'
-INPUT_FILE          = '/input.csv'
-OUTPUT_FILE         = '/output.json'
+FREQUENCY_FILE      = '/frequencies.csv'
+HEADER_FILE		    = '/header.json'
+TIMETABLE_FILE      = '/timetable.json'
 
-#better format: ref,terminal-1,terminal-2,opening-hours,duration,frequency (one line for each direction!)
 
 CSV_IDX_REF         = 0
-CSV_IDX_TERMINALS   = 1
+CSV_IDX_FROM        = 1
+CSV_IDX_TO          = 2
 CSV_IDX_HOURS       = 3
-CSV_IDX_DURATION    = 4
-CSV_IDX_FREQUENCY   = 5
+CSV_IDX_EXCEPTIONS  = 4
+CSV_IDX_DURATION    = 5
+CSV_IDX_FREQUENCY   = 6
 
-
-CSV_NETWORK         = 'mock' # TODO: add command parameter
+# default values for 
+DEFAULT_FOLDER      = 'mock'
 MODE_PER_HOUR		= False
 
-def main():
+def main(argv):
+    global MODE_PER_HOUR
+    
+    folder = DEFAULT_FOLDER
 
-    inputfile = DATA_FOLDER+CSV_NETWORK+INPUT_FILE
-
+    try:
+        (opts, args) = getopt.getopt(argv,"f:h",["folder=","per_hour"])
+    except getopt.GetoptError:
+        print ('convert.py -f|--folder <folder> [-h|--per_hour]')
+        sys.exit(2)
+    for (opt, arg) in opts:
+        if opt in ('-f', '--folder'):
+            folder = arg
+            if not os.path.exists(DATA_FOLDER+folder):
+                sys.stderr.write("Error: No folder found at '%s'.\n" % (DATA_FOLDER+folder))
+                sys.exit(0)
+        elif opt in ('-h','--per_hour'):
+            MODE_PER_HOUR = True
+    
+    
     # Load input csv file
-    if os.path.exists(inputfile):
+    frequency_file = DATA_FOLDER+folder+FREQUENCY_FILE
+    
+    if os.path.exists(frequency_file):
         try:
-            with open(inputfile, newline='', encoding='utf-8') as f:
+            with open(frequency_file, newline='', encoding='utf-8') as f:
                 reader = csv.reader(f)
                 input_data = list(reader)
 
@@ -35,15 +55,52 @@ def main():
             print(e)
             sys.exit(0)
     else:
-        sys.stderr.write("Error: No input csv file found at '%s'.\n" % DATA_FOLDER+CSV_NETWORK+INPUT_FILE)
+        sys.stderr.write("Error: No input csv file found at '%s'.\n" % frequency_file)
         sys.exit(0)
 
-    # add header information (network etc.)
+    # load header json file
+    header_file = DATA_FOLDER+folder+HEADER_FILE
+    header_data = None
+    
+    if os.path.exists(header_file):
+        try:
+            with open(header_file, newline='', encoding='utf-8') as f:
+                header_data = json.load(f)
 
-    output = {"lines": dict()}
+        except json.JSONDecodeError as e:
+            sys.stderr.write('Error: I got a problem reading your header json. Is it in a good format?\n')
+            print(e)
+            sys.exit(0)
+    else:
+        sys.stderr.write("Warning: No header json file found at '%s'.\nYou HAVE TO add it later manually.\n" % header_file)
+        # implement questioning
+
+    output = generate_json(input_data, header_data)
+
+    # Write output json file
+    with open(DATA_FOLDER+folder+TIMETABLE_FILE, 'w', encoding='utf8') as outfile:
+        json.dump(output, outfile, sort_keys=True, indent=4, ensure_ascii=False)
+
+    # End program
+    sys.exit()
+
+def generate_json(input_data, header_data):
+    
+    output = {}
     header_line = True
-    headers = {}
-    days = ['Mo','Tu','We','Th','Fr','Sa','Su']
+    
+    # add header information
+    if header_data is not None:
+        header_keys = ['start_date','end_date','source','operator','network','excluded_lines']
+        for key in header_keys:
+            if key in header_data:
+                output[key] = header_data[key]
+            else:
+                sys.stderr.write("Warning: The header json file lacks the key '%s'.\nYou HAVE TO add it later manually.\n" % key)
+
+	# add basic json structure
+    output['updated'] = datetime.date.today().isoformat()
+    output['lines'] = {}
 
     # Loop through bus lines
     for data in input_data:
@@ -56,8 +113,12 @@ def main():
         ref = data[CSV_IDX_REF]
         if ref not in output["lines"]:
             output["lines"][ref] = []
-        fr = data[CSV_IDX_TERMINALS]
-        to = data[CSV_IDX_TERMINALS+1]
+        fr = data[CSV_IDX_FROM]
+        to = data[CSV_IDX_TO]
+        
+        exceptions = data[CSV_IDX_EXCEPTIONS].split(";")
+        if exceptions[0] == '' :
+            exceptions = []
         
         # Prepare schedule
         opening_hours = data[CSV_IDX_HOURS].split(";")
@@ -75,47 +136,28 @@ def main():
             
             
         for opening_service in opening_services.keys():
-            
-            #search for already existing service
-            existing = -1
-            for i, service in enumerate(output["lines"][ref]):
-                if (service["from"] == fr
-					and service["to"] == to
-					and service["services"][0] == opening_service): #TODO: loop through services? AND add from/to check!!
-                    existing = i
-                    break
-            
-            # output for services
+            # output timetable information
+            service = {
+                "from": fr,
+                "to": to,
+                "services": [opening_service],
+                "stations": [fr, to],
+                "exeptions": exceptions,
+                "times": []
+            }
             for opening_hour in opening_services[opening_service]:
-                # output timetable information            
-                if existing != -1:
-                    print("yeah")
-                    output["lines"][ref][existing]["times"] = output["lines"][ref][existing]["times"] + generate_times(data, opening_hour)
-                else:
-                    output["lines"][ref].append({
-                        "from": fr,
-                        "to": to,
-                        "services": [opening_service],
-                        "stations": [data[CSV_IDX_TERMINALS], data[CSV_IDX_TERMINALS+1]],
-                        "times": generate_times(data, opening_hour)
-                    })
-                    existing = len(output["lines"][ref])-1
+                service["times"] += generate_times(opening_hour, int(data[CSV_IDX_DURATION]), float(data[CSV_IDX_FREQUENCY]))
+            
+            output["lines"][ref].append(service)
+    
+    return output
 
 
-    # Write output json file
-    with open(DATA_FOLDER+CSV_NETWORK+OUTPUT_FILE, 'w', encoding='utf8') as outfile:
-        json.dump(output, outfile, sort_keys=True, indent=4, ensure_ascii=False)
-
-    # End program
-    sys.exit()
-
-
-def generate_times(data, hour):
+def generate_times(hour, duration, frequency):
 
     data_index = int()
     schedule = dict()
     times = list()
-    duration = int(data[4])
 
     (start_hour, start_min, end_hour, end_min) = re.search(r"([0-9]+):([0-9]+)-([0-9]+):([0-9]+)" , hour).groups()
     (start_hour, start_min, end_hour, end_min) = (int(start_hour), int(start_min), int(end_hour), int(end_min))
@@ -123,9 +165,7 @@ def generate_times(data, hour):
     next_min = 0
     for current_hour in range(start_hour,end_hour+1,1):
 
-        # get standard frequency for current hour
-        frequency = float(data[CSV_IDX_FREQUENCY])
-        
+        # get standard frequency for current hour        
         if frequency is not 0:
             if MODE_PER_HOUR:
                 minutes = 60 // frequency
@@ -169,4 +209,4 @@ def calculate_times(hour, start_time, duration):
     return calculated_time
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

@@ -1,7 +1,16 @@
 {
+    "end_date": "2017-12-18",
+    "excluded_lines": [
+        "4",
+        "5"
+    ],
     "lines": {
         "1": [
             {
+                "exeptions": [
+                    "2017-11-20",
+                    "2018-01-01"
+                ],
                 "from": "FAREM Norte",
                 "services": [
                     "Mo-Sa"
@@ -327,6 +336,7 @@
                 "to": "Hospital"
             },
             {
+                "exeptions": [],
                 "from": "Hospital",
                 "services": [
                     "Mo-Sa"
@@ -643,7 +653,21 @@
                     [
                         "18:55",
                         "19:30"
-                    ],
+                    ]
+                ],
+                "to": "FAREM Norte"
+            },
+            {
+                "exeptions": [],
+                "from": "Hospital",
+                "services": [
+                    "Mo-Sa"
+                ],
+                "stations": [
+                    "Hospital",
+                    "FAREM Norte"
+                ],
+                "times": [
                     [
                         "19:25",
                         "20:00"
@@ -652,5 +676,10 @@
                 "to": "FAREM Norte"
             }
         ]
-    }
+    },
+    "network": "NI-Estelí",
+    "operator": "Alcaldía Estelí",
+    "source": "survey",
+    "start_date": "2017-11-18",
+    "updated": "2017-11-18"
 }
