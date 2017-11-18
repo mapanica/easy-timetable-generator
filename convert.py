@@ -53,7 +53,7 @@ def main(argv):
                 input_data = list(reader)
 
         except ValueError as e:
-            sys.stderr.write('Error: I got a problem reading your csv. Is it in a good format?\n')
+            sys.stderr.write("Error: I got a problem reading your csv at '%s'. Is it in a good format?\n" % frequency_file)
             print(e)
             sys.exit(0)
     else:
@@ -70,7 +70,7 @@ def main(argv):
                 header_data = json.load(f)
 
         except json.JSONDecodeError as e:
-            sys.stderr.write('Error: I got a problem reading your header json. Is it in a good format?\n')
+            sys.stderr.write("Error: I got a problem reading your header json at '%s'. Is it in a good format?\n" % header_file)
             print(e)
             sys.exit(0)
     else:
@@ -93,7 +93,7 @@ def generate_json(input_data, header_data):
     
     # add header information
     if header_data is not None:
-        header_keys = ['start_date','end_date','excluded_lines']
+        header_keys = ['start_date','end_date','excluded_lines','included_lines']
         for key in header_keys:
             if key in header_data:
                 output[key] = header_data[key]
@@ -164,32 +164,41 @@ def generate_times(hour, duration, frequency):
     (start_hour, start_min, end_hour, end_min) = re.search(r"([0-9]+):([0-9]+)-([0-9]+):([0-9]+)" , hour).groups()
     (start_hour, start_min, end_hour, end_min) = (int(start_hour), int(start_min), int(end_hour), int(end_min))
 
+    # get number of minutes between public transport service
+    if frequency == 0:
+        sys.stderr.write("Error: You can not use the value '0' for frequency. Please check your frequencies.json\n")
+        sys.exit(0)
+    
+    if MODE_PER_HOUR:
+        minutes = 60 // frequency # exception (frequency = 0) already prevented
+    else:
+        minutes = frequency
+        
     next_min = 0
-    for current_hour in range(start_hour,end_hour+1,1):
+    current_hour = start_hour
+    
+    while current_hour <= end_hour:
+        
+        # first service leaves at opening_hour {start_hour}:{start_min}
+        if current_hour == start_hour:
+            next_min = start_min
+        
+        until = 59
+        # in the last hour, only services until {end_hour}:{end_min}
+        if current_hour == end_hour:
+            until = end_min
 
-        # get standard frequency for current hour        
-        if frequency is not 0:
-            if MODE_PER_HOUR:
-                minutes = 60 // frequency
-            else:
-                minutes = frequency
-            
-            # first service leaves at opening_hour {start_hour}:{start_min}
-            if current_hour == start_hour:
-                next_min = start_min
-            
-            until = 59
-            # in the last hour, only services until {end_hour}:{end_min}
-            if current_hour == end_hour:
-                until = end_min
-
-            # calculate times for the {current_hour} until (59 or {end_min})
-            while next_min <= until:
-                times.append(calculate_times(current_hour, int(next_min), duration))
-                next_min = next_min + minutes
-            
-            # prepare next_min for next hour
-            next_min = next_min % 60
+        # calculate times for the {current_hour} until (59 or {end_min})
+        while next_min <= until:
+            times.append(calculate_times(current_hour, int(next_min), duration))
+            next_min = next_min + minutes
+        
+        # prepare next_min for next hour
+        if current_hour == end_hour:
+            current_hour += 1
+        current_hour +=  (next_min // 60)
+        next_min = next_min % 60
+        
     
     return times
 
