@@ -1,26 +1,31 @@
-timetable-frequency-creator
-===========================
+easy-timetable-generator
+========================
 
 This script generates timetable information for a bus system based on frequencies
 to a json suitable for the use with [osm2gtfs](https://github.com/grote/osm2gtfs).
 As a starting point, [xamanu/timetable-csv2json](https://github.com/xamanu/timetable-csv2json) has been used,
 but then changed quite a lot to support a more general and specific input format.
-In some future, could be integrated into [osm2gtfs](https://github.com/grote/osm2gtfs) to support frequency data.
+In some near future, could be integrated into [osm2gtfs](https://github.com/grote/osm2gtfs) to support frequency data.
 
 Please make sure you use Python 3 to run it.
 
 Use
 ------------
 
-* Create a folder inside `data` and put an `input.csv` in it.
-* Create your `input.csv` according to the following scheme, separated by commas:
+* Create a folder `<folder>` inside `data` and put an `frequencies.csv` and an `header.json` in it.
+* Create your `frequencies.csv` according to the following scheme, separated by commas:
 	* `ref` = your public transport route number (as used in OSM)
 	* `from` = the first stop (as in OSM)
 	* `to` = the last stop (as in OSM)
-	* `opening-hours` = opening hours, subset from the OSM opening_hours specification, should look like `{Weekday(-{Weekday})} {start_hour:start_min}-{end_hour:end_min}`, for example `Mo-Sa 07:15-12:30`, separated by a `;`.
+	* `opening-hours` = opening hours, subset from the OSM opening_hours specification, should look like `{Weekday(-{Weekday})} {start_hour:start_min}-{end_hour:end_min}`, for example `Mo-Sa 07:15-12:30`, separated by a `;`
+	* `exceptions` = the dates (ISO 8601) which are excluded from the service, separated by a `;`
 	* `duration` = the time the public transport service needs to fulfill the route
 	* `frequency` = number of minutes between public transport services on this route
-* Run `python3 convert.py`
+* The `header.json` file follows the specification [here](https://github.com/grote/osm2gtfs/wiki/Timetable), without the `lines` and the `updated` keys
+* Run `python3 convert.py -f <folder>`
+
+There is also an alternative method of expressing frequencies: by the times, the public transport service passes in one hour.
+This alternative approach can be used with the `-h` or `--per_hour` flag when running the script (but you have to be sure, that all the rows for `frequency` inside `frequencies.csv` follow this approach)
 
 
 License
