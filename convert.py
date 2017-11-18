@@ -93,7 +93,7 @@ def generate_json(input_data, header_data):
     
     # add header information
     if header_data is not None:
-        header_keys = ['start_date','end_date','source','operator','network','excluded_lines']
+        header_keys = ['start_date','end_date','excluded_lines']
         for key in header_keys:
             if key in header_data:
                 output[key] = header_data[key]

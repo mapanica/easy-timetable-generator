@@ -1,11 +1,8 @@
 {
     "start_date": "2017-11-18",
     "end_date": "2017-12-18",
-    "network": "NI-Estelí",
-    "operator": "Alcaldía Estelí",
-    "source": "survey",
     "excluded_lines": [
-        "4",
+        "7",
         "5"
 	]
 }
