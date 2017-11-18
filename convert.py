@@ -8,7 +8,6 @@ FREQUENCY_FILE      = '/frequencies.csv'
 HEADER_FILE		    = '/header.json'
 TIMETABLE_FILE      = '/timetable.json'
 
-
 CSV_IDX_REF         = 0
 CSV_IDX_FROM        = 1
 CSV_IDX_TO          = 2
@@ -18,18 +17,17 @@ CSV_IDX_DURATION    = 5
 CSV_IDX_FREQUENCY   = 6
 
 # default values for 
-DEFAULT_FOLDER      = 'mock'
 MODE_PER_HOUR		= False
 
 def main(argv):
     global MODE_PER_HOUR
     
-    folder = DEFAULT_FOLDER
+    folder = ''
 
     try:
         (opts, args) = getopt.getopt(argv,"f:h",["folder=","per_hour"])
     except getopt.GetoptError:
-        print ('convert.py -f|--folder <folder> [-h|--per_hour]')
+        sys.stderr.write('convert.py -f|--folder <folder> [-h|--per_hour]\n')
         sys.exit(2)
     for (opt, arg) in opts:
         if opt in ('-f', '--folder'):
@@ -40,6 +38,10 @@ def main(argv):
         elif opt in ('-h','--per_hour'):
             MODE_PER_HOUR = True
     
+    if folder == '':
+        sys.stderr.write("Error: You have to specify a folder name.\n")
+        sys.stderr.write('convert.py -f|--folder <folder> [-h|--per_hour]\n')
+        sys.exit(2)
     
     # Load input csv file
     frequency_file = DATA_FOLDER+folder+FREQUENCY_FILE
