@@ -101,6 +101,7 @@ ENV/
 .mypy_cache/
 
 # data
-data/
+data/*
 data/example/timetable.json
-!data/example/*
+!data/example
+
