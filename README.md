@@ -21,7 +21,7 @@ Use
 	* `exceptions` = the dates (ISO 8601) which are excluded from the service, separated by a `;`
 	* `duration` = the time the public transport service needs to fulfill the route
 	* `frequency` = number of minutes between public transport services on this route
-* The `header.json` file follows the specification [here](https://github.com/grote/osm2gtfs/wiki/Timetable), without the `lines` and the `updated` keys
+* The `header.json` file follows the specification [here](https://github.com/grote/osm2gtfs/wiki/Schedule), without the `lines` and the `updated` keys
 * Run `python3 convert.py -f <folder>`
 
 There is also an alternative method of expressing frequencies: by the times, the public transport service passes in one hour.

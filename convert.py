@@ -27,7 +27,7 @@ def main(argv):
     try:
         (opts, args) = getopt.getopt(argv,"f:h",["folder=","per_hour"])
     except getopt.GetoptError:
-        sys.stderr.write('convert.py -f|--folder <folder> [-h|--per_hour]\n')
+        sys.stderr.write('convert.py -f | --folder <folder> [-h | --per_hour]\n')
         sys.exit(2)
     for (opt, arg) in opts:
         if opt in ('-f', '--folder'):
