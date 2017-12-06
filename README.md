@@ -17,7 +17,7 @@ Use
 	* `ref` = your public transport route number (as used in OSM)
 	* `from` = the first stop (as in OSM)
 	* `to` = the last stop (as in OSM)
-	* `opening-hours` = opening hours, subset from the OSM opening_hours specification, should look like `{Weekday(-{Weekday})} {start_hour:start_min}-{end_hour:end_min}`, for example `Mo-Sa 07:15-12:30`, separated by a `;`
+	* `opening-hours` = opening hours, subset from the OSM opening_hours specification, should look like `{Weekday(-{Weekday})} {start_hour:start_min}(-{end_hour:end_min})`, for example `Mo-Sa 07:15-12:30` or `Tu 15:15`, separated by a `;`
 	* `exceptions` = the dates (ISO 8601) which are excluded from the service, separated by a `;`
 	* `duration` = the time the public transport service needs to fulfill the route
 	* `frequency` = number of minutes between public transport services on this route

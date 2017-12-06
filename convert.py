@@ -161,12 +161,22 @@ def generate_times(hour, duration, frequency):
     schedule = dict()
     times = list()
 
-    (start_hour, start_min, end_hour, end_min) = re.search(r"([0-9]+):([0-9]+)-([0-9]+):([0-9]+)" , hour).groups()
+    regex = re.search(r"([0-9]+):([0-9]+)-([0-9]+):([0-9]+)" , hour)
+    if regex is not None:
+        (start_hour, start_min, end_hour, end_min) = regex.groups()
+    else:
+        regex = re.search(r"([0-9]+):([0-9]+)" , hour)
+        if regex is None:
+            sys.stderr.write("Error: Some format error in the opening_hours. Please check your frequencies.csv.\n")
+            sys.exit(0)
+        (start_hour, start_min) = regex.groups()
+        (end_hour, end_min) = (start_hour, start_min)
+
     (start_hour, start_min, end_hour, end_min) = (int(start_hour), int(start_min), int(end_hour), int(end_min))
 
     # get number of minutes between public transport service
     if frequency == 0:
-        sys.stderr.write("Error: You can not use the value '0' for frequency. Please check your frequencies.json\n")
+        sys.stderr.write("Error: You can not use the value '0' for frequency. Please check your frequencies.csv.\n")
         sys.exit(0)
     
     if MODE_PER_HOUR:
