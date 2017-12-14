@@ -17,9 +17,12 @@ Use
 	* `ref` = your public transport route number (as used in OSM)
 	* `from` = the first stop (as in OSM)
 	* `to` = the last stop (as in OSM)
+	* `via` = an intermediate stop (as in OSM)
+	* `intermediates` = intermediate stop names (as in OSM), separated by a `;`
 	* `opening-hours` = opening hours, subset from the OSM opening_hours specification, should look like `{Weekday(-{Weekday})} {start_hour:start_min}(-{end_hour:end_min})`, for example `Mo-Sa 07:15-12:30` or `Tu 15:15`, separated by a `;`
 	* `exceptions` = the dates (ISO 8601) which are excluded from the service, separated by a `;`
 	* `duration` = the time the public transport service needs to fulfill the route
+	* `intermediate-durations` = the time the public transport service needs from the first stop to the respective intermediate stop, separated by a `;`, has to be exactly as long as the `intermediates` list
 	* `frequency` = number of minutes between public transport services on this route
 * The `header.json` file follows the specification [here](https://github.com/grote/osm2gtfs/wiki/Schedule), without the `lines` and the `updated` keys
 * Run `python3 convert.py -f <folder>`

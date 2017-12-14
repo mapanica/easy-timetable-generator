@@ -8,13 +8,16 @@ FREQUENCY_FILE      = '/frequencies.csv'
 HEADER_FILE		    = '/header.json'
 TIMETABLE_FILE      = '/timetable.json'
 
-CSV_IDX_REF         = 0
-CSV_IDX_FROM        = 1
-CSV_IDX_TO          = 2
-CSV_IDX_HOURS       = 3
-CSV_IDX_EXCEPTIONS  = 4
-CSV_IDX_DURATION    = 5
-CSV_IDX_FREQUENCY   = 6
+CSV_IDX_REF                    = 0
+CSV_IDX_FROM                   = 1
+CSV_IDX_TO                     = 2
+CSV_IDX_VIA                    = 3
+CSV_IDX_INTERMEDIATES          = 4
+CSV_IDX_HOURS                  = 5
+CSV_IDX_EXCEPTIONS             = 6
+CSV_IDX_DURATION               = 7
+CSV_IDX_INTERMEDIATE_DURATIONS = 8
+CSV_IDX_FREQUENCY              = 9
 
 # default values for 
 MODE_PER_HOUR		= False
@@ -117,9 +120,21 @@ def generate_json(input_data, header_data):
             output["lines"][ref] = []
         fr = data[CSV_IDX_FROM]
         to = data[CSV_IDX_TO]
+        via = data[CSV_IDX_VIA]
+        
+        intermediates = data[CSV_IDX_INTERMEDIATES].split(";")
+        if len(intermediates) == 1 and intermediates[0] == '':
+            intermediates = []
+        intermediate_durations = data[CSV_IDX_INTERMEDIATE_DURATIONS].split(";")
+        if len(intermediate_durations) == 1 and intermediate_durations[0] == '':
+            intermediate_durations = []
+            
+        if len(intermediates) != len(intermediate_durations):
+            sys.stderr.write("Error: For ref=%s, from='%s', to='%s', via='%s', there weren't the same number of intermediate stops and intermediate times.\nSkipping this line, please check your frequencies.csv.\n" % (ref,fr,to,via))
+            continue
         
         exceptions = data[CSV_IDX_EXCEPTIONS].split(";")
-        if exceptions[0] == '' :
+        if len(exceptions) == 1 and exceptions[0] == '':
             exceptions = []
         
         # Prepare schedule
@@ -143,19 +158,31 @@ def generate_json(input_data, header_data):
                 "from": fr,
                 "to": to,
                 "services": [opening_service],
-                "stations": [fr, to],
                 "exeptions": exceptions,
                 "times": []
             }
+            
+            if len(via) > 0:
+                service["via"] = via
+
+            if len(intermediates) > 0:
+                stations = list()
+                stations.append(fr)
+                stations.extend(intermediates)
+                stations.append(to)
+                service["stations"] = stations
+            else:
+                service["stations"] = [fr, to]
+            
             for opening_hour in opening_services[opening_service]:
-                service["times"] += generate_times(opening_hour, int(data[CSV_IDX_DURATION]), float(data[CSV_IDX_FREQUENCY]))
+                service["times"] += generate_times(opening_hour, int(data[CSV_IDX_DURATION]), intermediate_durations, float(data[CSV_IDX_FREQUENCY]))
             
             output["lines"][ref].append(service)
     
     return output
 
 
-def generate_times(hour, duration, frequency):
+def generate_times(hour, duration, intermediate_durations, frequency):
 
     data_index = int()
     schedule = dict()
@@ -200,7 +227,7 @@ def generate_times(hour, duration, frequency):
 
         # calculate times for the {current_hour} until (59 or {end_min})
         while next_min <= until:
-            times.append(calculate_times(current_hour, int(next_min), duration))
+            times.append(calculate_times(current_hour, int(next_min), duration, intermediate_durations))
             next_min = next_min + minutes
         
         # prepare next_min for next hour
@@ -212,22 +239,31 @@ def generate_times(hour, duration, frequency):
     
     return times
 
-def calculate_times(hour, start_time, duration):
+def calculate_times(hour, start_time, duration, intermediate_durations):
 
     calculated_time = list()
 
-    calculated_time.append("%02d:%02d" % (hour,start_time))
+    # Append start time
+    calculated_time.append(calculate_time(hour, start_time, 0))
 
-    # Calculate end_time
+    # Append intermediate times
+    for intermediate_duration in intermediate_durations:
+        calculated_time.append(calculate_time(hour, start_time, int(intermediate_duration)))
+
+    # Append end time
+    calculated_time.append(calculate_time(hour, start_time, duration))
+
+    return calculated_time
+
+def calculate_time(hour, start_time, duration):
     end_time = start_time + duration
     
     if end_time >= 60:
         hour = hour + (end_time // 60)
         end_time = end_time % 60
 
-    calculated_time.append("%02d:%02d" % (hour,end_time))
-
-    return calculated_time
+    return "%02d:%02d" % (hour,end_time)
+    
 
 if __name__ == "__main__":
     main(sys.argv[1:])
