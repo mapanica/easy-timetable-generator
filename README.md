@@ -14,16 +14,16 @@ Use
 
 * Create a folder `<folder>` inside `data` and put an `frequencies.csv` and an `header.json` in it.
 * Create your `frequencies.csv` according to the following scheme, separated by commas:
-	* `ref` = your public transport route number (as used in OSM)
-	* `from` = the first stop (as in OSM)
-	* `to` = the last stop (as in OSM)
-	* `via` = an intermediate stop (as in OSM)
-	* `intermediates` = intermediate stop names (as in OSM), separated by a `;`
-	* `opening-hours` = opening hours, subset from the OSM opening_hours specification, should look like `{Weekday(-{Weekday})} {start_hour:start_min}(-{end_hour:end_min})`, for example `Mo-Sa 07:15-12:30` or `Tu 15:15`, separated by a `;`
-	* `exceptions` = the dates (ISO 8601) which are excluded from the service, separated by a `;`
-	* `duration` = the time the public transport service needs to fulfill the route
-	* `intermediate-durations` = the time the public transport service needs from the first stop to the respective intermediate stop, separated by a `;`, has to be exactly as long as the `intermediates` list
-	* `frequency` = number of minutes between public transport services on this route
+	* `ref` = your public transport route number _(as used in OSM, required)_
+	* `from` = the first stop _(as in OSM, required)_
+	* `to` = the last stop _(as in OSM, required)_
+	* `via` = an intermediate stop _(as in OSM, required when present in OSM data)_
+	* `intermediates` = intermediate stop names (as in OSM), separated by a `;` _(not required)_
+	* `opening-hours` = opening hours, subset from the OSM opening_hours specification, should look like `{Weekday(-{Weekday})} {start_hour:start_min}(-{end_hour:end_min})`, for example `Mo-Sa 07:15-12:30`, `Tu 15:15` or even `Tu 12:30|14:00`, separated by a `;` _(required)_
+	* `exceptions` = the dates (ISO 8601) which are excluded from the service, separated by a `;` _(not required)_
+	* `duration` = the time the public transport service needs to fulfill the route _(required)_
+	* `intermediate-durations` = the time the public transport service needs from the first stop to the respective intermediate stop, separated by a `;`, has to be exactly as long as the `intermediates` list _(required, if `intermediates` is set)_
+	* `frequency` = number of minutes between public transport services on this route _(required, but in the case `opening-hours` does not include time ranges it can be left blank)_
 * The `header.json` file follows the specification [here](https://github.com/grote/osm2gtfs/wiki/Schedule), without the `lines` and the `updated` keys
 * Run `python3 convert.py -f <folder>`
 

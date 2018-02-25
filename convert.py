@@ -146,21 +146,29 @@ def generate_json(input_data, header_data):
         exceptions = data[CSV_IDX_EXCEPTIONS].split(";")
         if len(exceptions) == 1 and exceptions[0] == '':
             exceptions = []
-        
+
+        frequency = data[CSV_IDX_FREQUENCY]
+        if len(frequency) == 0:
+            frequency = 0
+        else:
+            frequency = float(frequency)
+
         # Prepare schedule
-        opening_hours = data[CSV_IDX_HOURS].split(";")
+        opening_weekdays_and_hours = data[CSV_IDX_HOURS].split(";")
         opening_services = {}
 
-        for i, d in enumerate(opening_hours):
+        for i, d in enumerate(opening_weekdays_and_hours):
 
             # Convert into understandable service schedules
-            (opening_service, opening_hour) = opening_hours[i].strip().split(' ')
+            (opening_service, opening_hours) = opening_weekdays_and_hours[i].strip().split(' ')
 
-            if opening_service in opening_services:
+            opening_hours = opening_hours.split('|')
+
+            if opening_service not in opening_services:
+                opening_services[opening_service] = []
+
+            for opening_hour in opening_hours:
                 opening_services[opening_service].append(opening_hour)
-            else:
-                opening_services[opening_service] = [opening_hour]
-            
             
         for opening_service in opening_services.keys():
             # output timetable information
@@ -185,7 +193,7 @@ def generate_json(input_data, header_data):
                 service["stations"] = [fr, to]
             
             for opening_hour in opening_services[opening_service]:
-                service["times"] += generate_times(opening_hour, int(data[CSV_IDX_DURATION]), intermediate_durations, float(data[CSV_IDX_FREQUENCY]))
+                service["times"] += generate_times(opening_hour, int(data[CSV_IDX_DURATION]), intermediate_durations, frequency)
             
             output["lines"][ref].append(service)
     
@@ -207,13 +215,14 @@ def generate_times(hour, duration, intermediate_durations, frequency):
             sys.stderr.write("Error: Some format error in the opening_hours. Please check your frequencies.csv.\n")
             sys.exit(0)
         (start_hour, start_min) = regex.groups()
-        (end_hour, end_min) = (start_hour, start_min)
+        times.append(calculate_times(int(start_hour), int(start_min), duration, intermediate_durations))
+        return times
 
     (start_hour, start_min, end_hour, end_min) = (int(start_hour), int(start_min), int(end_hour), int(end_min))
 
     # get number of minutes between public transport service
     if frequency == 0:
-        sys.stderr.write("Error: You can not use the value '0' for frequency. Please check your frequencies.csv.\n")
+        sys.stderr.write("Error: You can not use a blank value or the value '0' for frequency if time ranges are given. Please check your frequencies.csv.\n")
         sys.exit(0)
     
     if MODE_PER_HOUR:
