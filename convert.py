@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding=utf-8
 
 import os, sys, csv, json, re, datetime, getopt
@@ -44,6 +44,7 @@ def main(argv):
     if folder == '':
         sys.stderr.write("Error: You have to specify a folder name.\n")
         sys.stderr.write('convert.py -f|--folder <folder> [-h|--per_hour]\n')
+        sys.stderr.write('Example: python3 convert.py -f \'example\'\n')
         sys.exit(2)
     
     # Load input csv file
@@ -96,12 +97,21 @@ def generate_json(input_data, header_data):
     
     # add header information
     if header_data is not None:
-        header_keys = ['start_date','end_date','excluded_lines','included_lines']
-        for key in header_keys:
+        recommended_header_keys = ['start_date','end_date']
+        for key in recommended_header_keys:
             if key in header_data:
                 output[key] = header_data[key]
             else:
-                sys.stderr.write("Warning: The header json file lacks the key '%s'.\nYou HAVE TO add it later manually.\n" % key)
+                sys.stderr.write("Warning: The header json file lacks the key '%s'.\nYou are recommended to add it later manually.\n" % key)
+
+        optional_header_keys = ['excluded_lines','included_lines']
+        for key in optional_header_keys:
+            if key in header_data:
+                output[key] = header_data[key]
+            else:
+                sys.stderr.write("Warning: The header json file lacks the key '%s'.\nYou can optionally add it later manually.\n" % key)
+
+
 
 	# add basic json structure
     output['updated'] = datetime.date.today().isoformat()
@@ -158,7 +168,7 @@ def generate_json(input_data, header_data):
                 "from": fr,
                 "to": to,
                 "services": [opening_service],
-                "exeptions": exceptions,
+                "exceptions": exceptions,
                 "times": []
             }
             
@@ -266,4 +276,6 @@ def calculate_time(hour, start_time, duration):
     
 
 if __name__ == "__main__":
+    if sys.version_info[0] < 3:
+        raise Exception("Python 3 or a more recent version is required.")
     main(sys.argv[1:])
