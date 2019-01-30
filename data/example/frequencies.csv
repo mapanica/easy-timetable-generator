@@ -1,2 +1,4 @@
 ref,from,to,via,intermediates,opening-hours,exceptions,duration,intermediate-durations,frequency
 1,FAREM Norte,Hospital,Parque Central,Parque Central;El Calvario,Mo-Sa 05:40-18:20;Mo-Sa 18:50,2017-11-20;2018-01-01,35,15;20,10
+1,Hospital,FAREM Norte,,,Mo-Sa 06:15-18:55,,35,,10
+1,Hospital,FAREM Norte,,,Mo-Sa 19:25,,35,,1

@@ -1,8 +1,8 @@
 {
-    "start_date": "2019-01-01",
-    "end_date": "2019-12-31",
-    "included_lines": ["1"],
-	"excluded_lines": [],
-	"version": "1.0",
-	"updated": "2019-01-30"
+    "start_date": "2017-11-18",
+    "end_date": "2017-12-18",
+    "excluded_lines": [
+        "7",
+        "5"
+	]
 }
